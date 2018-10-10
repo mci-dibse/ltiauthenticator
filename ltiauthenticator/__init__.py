@@ -154,12 +154,7 @@ class LTIAuthenticator(Authenticator):
             # If this is the case we want to use the canvas ID to allow grade returns through the Canvas API
             # If Canvas is running in anonymous mode, we'll still want the 'user_id' (which is the `lti_user_id``)
 
-            canvas_id = handler.get_body_argument('custom_canvas_user_id', default=None)
-
-            if canvas_id is not None:
-                user_id = handler.get_body_argument('custom_canvas_user_id')
-            else:
-                user_id = handler.get_body_argument('user_id')
+            user_id = handler.get_body_argument('lis_person_sourcedid')
 
             return {
                 'name': user_id,
