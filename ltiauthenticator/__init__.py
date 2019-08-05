@@ -1,4 +1,5 @@
 import time
+import logging
 
 from traitlets import Bool, Dict
 from tornado import gen, web
@@ -9,6 +10,14 @@ from jupyterhub.utils import url_path_join
 
 from oauthlib.oauth1.rfc5849 import signature
 from collections import OrderedDict
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+f_handler = logging.FileHandler('jupyterhub_user.log')
+f_handler.setLevel(logging.DEBUG)
+f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+f_handler.setFormatter(f_format)
+logger.addHandler(f_handler)
 
 class LTILaunchValidator:
     # Record time when process starts, so we can reject requests made
@@ -147,23 +156,31 @@ class LTIAuthenticator(Authenticator):
                 handler.request.headers,
                 args
         ):
-            # Before we return lti_user_id, check to see if a canvas_custom_user_id was sent. 
-            # If so, this indicates two things:
-            # 1. The request was sent from Canvas, not edX
-            # 2. The request was sent from a Canvas course not running in anonymous mode
-            # If this is the case we want to use the canvas ID to allow grade returns through the Canvas API
-            # If Canvas is running in anonymous mode, we'll still want the 'user_id' (which is the `lti_user_id``)
 
             user_id = handler.get_body_argument('lis_person_sourcedid')
-
-            return {
+            course = handler.get_body_argument('context_title')
+            handler.settings['course'] = course
+            logger.info('Received LTI request. Course: %s; User: %s', course, user_id);
+        return {
                 'name': user_id,
-                'auth_state': {k: v for k, v in args.items() if not k.startswith('oauth_')}
-            }
+                'auth_state': {
+                    'course': course,
+                },
+        }
 
 
     def login_url(self, base_url):
         return url_path_join(base_url, '/lti/launch')
+
+    @gen.coroutine
+    def pre_spawn_start(self, user, spawner):
+        auth_state = yield user.get_auth_state()
+        if not auth_state:
+            spawner.environment['COURSE'] = 'NONE'
+        if 'course' not in auth_state:
+            spawner.environment['COURSE'] = 'NONE'
+        else:
+            spawner.environment['COURSE'] = auth_state['course']
 
 
 class LTIAuthenticateHandler(BaseHandler):
