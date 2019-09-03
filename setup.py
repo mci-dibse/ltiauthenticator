@@ -10,7 +10,6 @@ setup(
     license='3 Clause BSD',
     packages=find_packages(),
     install_requires=[
-        'jupyterhub>=0.8',
         'oauthlib==2.*'
     ]
 )
