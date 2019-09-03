@@ -175,18 +175,20 @@ class LTIAuthenticator(Authenticator):
         return url_path_join(base_url, '/lti/launch')
 
     @gen.coroutine
-    def pre_spawn_start(self, user, spawner):
+    def (self, user, spawner):
         auth_state = yield user.get_auth_state()
         if not auth_state:
             spawner.environment['COURSE'] = 'NONE'
             spawner.environment['CONTEXT_ID'] = 'NONE'
-        if 'course' not in auth_state:
-            spawner.environment['COURSE'] = 'NONE'
-        if 'context_id' not in auth_state:
-            spawner.environment['CONTEXT_ID'] = 'NONE'
         else:
-            spawner.environment['COURSE'] = auth_state['course']
-            spawner.environment['CONTEXT_ID'] = auth_state['context_id']
+            if 'course' not in auth_state:
+                spawner.environment['COURSE'] = 'NONE'
+            else:
+                spawner.environment['COURSE'] = auth_state['course']
+            if 'context_id' not in auth_state:
+                spawner.environment['CONTEXT_ID'] = 'NONE'
+            else:
+                spawner.environment['CONTEXT_ID'] = auth_state['context_id']
 
 
 class LTIAuthenticateHandler(BaseHandler):
