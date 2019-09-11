@@ -13,7 +13,7 @@ from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-f_handler = logging.FileHandler('/var/log/jupyterhub/user.log')
+f_handler = logging.FileHandler('/home/jupyter/jupyterhub-log/user.log')
 f_handler.setLevel(logging.DEBUG)
 f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 f_handler.setFormatter(f_format)
@@ -180,13 +180,15 @@ class LTIAuthenticator(Authenticator):
         if not auth_state:
             spawner.environment['COURSE'] = 'NONE'
             spawner.environment['CONTEXT_ID'] = 'NONE'
-        if 'course' not in auth_state:
-            spawner.environment['COURSE'] = 'NONE'
-        if 'context_id' not in auth_state:
-            spawner.environment['CONTEXT_ID'] = 'NONE'
         else:
-            spawner.environment['COURSE'] = auth_state['course']
-            spawner.environment['CONTEXT_ID'] = auth_state['context_id']
+            if 'course' not in auth_state:
+                spawner.environment['COURSE'] = 'NONE'
+            else:
+                spawner.environment['COURSE'] = auth_state['course']
+            if 'context_id' not in auth_state:
+                spawner.environment['CONTEXT_ID'] = 'NONE'
+            else:
+                spawner.environment['CONTEXT_ID'] = auth_state['context_id']
 
 
 class LTIAuthenticateHandler(BaseHandler):
